@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model agenda {
+  id Int @id @default(autoincrement())
+  descricao String
+  funcionarioId Int
+  funcionario funcionario @relation("FuncionarioId", fields: [funcionarioId], references: [id])
+  clienteId Int?
+  cliente cliente? @relation("ClienteId", fields: [clienteId], references: [id])
+  tipoAgendaId Int
+  tipoAgenda tipoAgenda @relation("TipoAgendaId", fields: [tipoAgendaId], references: [id])
+  horaInicio DateTime 
+  horaFim DateTime
+
+  @@map("agendas")
+}
+
+model funcionario {
+  id Int @id @default(autoincrement())
+  descricao String
+  funcao Int
+  agenda agenda[] @relation("FuncionarioId")
+}
+
+model cliente {
+  id Int @id @default(autoincrement())
+  descricao String
+  agenda agenda[] @relation("ClienteId")
+}
+
+model tipoAgenda {
+  id Int @id @default(autoincrement())
+  descricao String
+  agenda agenda[] @relation("TipoAgendaId")
+}
