@@ -74,20 +74,25 @@ class BuscarFuncionarioNomeService{
 
 class BuscarFuncionarioEspecialidadeService{
     async execute({descricao}: {descricao: string}){
+        const termo = { contains: descricao || '', mode: 'insensitive' as const }
         // funcao guarda o id do tipoAgenda, então busca primeiro as especialidades pelo nome
-        const tipos = await prismaClient.tipoAgenda.findMany({
-            where:{
-                descricao: {
-                    contains: descricao || '',
-                    mode: 'insensitive'
-                }
-            }
+        const tiposEncontrados = await prismaClient.tipoAgenda.findMany({
+            where:{ descricao: termo }
         })
 
+        // acha a profissional pela atuação ou pelo próprio nome
         const funcionarios = await prismaClient.funcionario.findMany({
             where:{
-                funcao: { in: tipos.map((t) => t.id) }
-            }
+                OR: [
+                    { funcao: { in: tiposEncontrados.map((t) => t.id) } },
+                    { descricao: termo }
+                ]
+            },
+            orderBy: { descricao: 'asc' }
+        })
+
+        const tipos = await prismaClient.tipoAgenda.findMany({
+            where:{ id: { in: funcionarios.map((f) => f.funcao) } }
         })
 
         return funcionarios.map((f) => ({

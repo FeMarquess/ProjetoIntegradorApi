@@ -18,6 +18,40 @@ function idadeNaData(nascimento: Date, data: Date){
     return idade
 }
 
+const DIAS_PROXIMOS = 14
+
+const chaveDia = (data: Date) =>
+    `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`
+
+// Agendamentos ainda não concluídos por dia, de hoje até DIAS_PROXIMOS à frente.
+// Dias sem agendamento entram com 0 para a série ficar contínua.
+async function proximosAgendamentos(){
+    const inicio = new Date()
+    inicio.setHours(0, 0, 0, 0)
+    const fim = new Date(inicio)
+    fim.setDate(fim.getDate() + DIAS_PROXIMOS)
+
+    const agendas = await prismaClient.agenda.findMany({
+        where: {
+            status: { not: 'concluido' },
+            horaInicio: { gte: inicio, lt: fim }
+        },
+        select: { horaInicio: true }
+    })
+
+    const dias: { data: string, total: number }[] = []
+    for(let i = 0; i < DIAS_PROXIMOS; i++){
+        const dia = new Date(inicio)
+        dia.setDate(dia.getDate() + i)
+        dias.push({ data: chaveDia(dia), total: 0 })
+    }
+    for(const agenda of agendas){
+        const dia = dias.find((d) => d.data === chaveDia(agenda.horaInicio))
+        if(dia) dia.total++
+    }
+    return dias
+}
+
 // Só atendimentos concluídos entram nos indicadores: agendamentos futuros ou em andamento
 // ainda podem ser cancelados ou alterados
 class BuscarIndicadoresService{
@@ -83,7 +117,8 @@ class BuscarIndicadoresService{
         return {
             totalAtendimentos: agendas.length,
             servicos: listaServicos,
-            faixas: faixas
+            faixas: faixas,
+            proximosDias: await proximosAgendamentos()
         }
     }
 }
