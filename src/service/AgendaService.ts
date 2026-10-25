@@ -4,6 +4,17 @@ import type { Agenda } from "../type/Agenda.js";
 const dataInicio = new Date()
 const dataFim = new Date(dataInicio.setMinutes(dataInicio.getMinutes() + 30))
 
+// traz os nomes de cliente, profissional e serviço junto com cada agenda
+const incluirNomes = {
+    cliente: true,
+    funcionario: true,
+    tipoAgenda: true
+}
+
+function horarioInvalido(Agenda: Agenda){
+    return new Date(Agenda.horaFim) <= new Date(Agenda.horaInicio)
+}
+
 interface data{
     data: Date
 }
@@ -18,6 +29,9 @@ interface descricao{
 
 class CriarAgendaService{
     async execute(Agenda: Agenda){
+        if(horarioInvalido(Agenda)){
+            return("O fim da agenda deve ser depois do início")
+        }
         try{
         const res = await prismaClient.agenda.create({
             data:{
@@ -39,7 +53,9 @@ class CriarAgendaService{
 class BuscarAgendaService{
     async execute(){
         try{
-        const Agenda = await prismaClient.agenda.findMany()
+        const Agenda = await prismaClient.agenda.findMany({
+            include: incluirNomes
+        })
 
         return Agenda
     }catch(error){
@@ -53,6 +69,7 @@ class BuscarAgendaNomeService{
         console.log(descricao)
         try{
         const Agenda = await prismaClient.agenda.findMany({
+            include: incluirNomes,
             where: {
                 descricao: {
                 contains: descricao,
@@ -76,6 +93,7 @@ class BuscarAgendaDataService {
       const fim = new Date(inicio)
         fim.setDate(fim.getDate() + 1)
     const agenda = await prismaClient.agenda.findMany({
+      include: incluirNomes,
       where: {
         horaInicio: {
           gte: inicio,
@@ -94,6 +112,7 @@ class BuscarAgendaIdService{
     async execute({id}: id){
         try {
          const Agenda = await prismaClient.agenda.findUnique({
+            include: incluirNomes,
             where:{
                 id: Number(id)
             }
@@ -124,6 +143,9 @@ class DeletarAgendaIdService{
 
 class AlterarAgendaIdService{
     async execute(Agenda: Agenda, id: Number){
+        if(horarioInvalido(Agenda)){
+            return("O fim da agenda deve ser depois do início")
+        }
         if(id){
             const idAlterar = Number(id)
             const agenda = await prismaClient.agenda.update({
