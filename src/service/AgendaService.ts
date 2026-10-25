@@ -56,7 +56,8 @@ class BuscarAgendaService{
     async execute(){
         try{
         const Agenda = await prismaClient.agenda.findMany({
-            include: incluirNomes
+            include: incluirNomes,
+            orderBy: { horaInicio: 'asc' }
         })
 
         return Agenda
@@ -72,6 +73,7 @@ class BuscarAgendaNomeService{
         try{
         const Agenda = await prismaClient.agenda.findMany({
             include: incluirNomes,
+            orderBy: { horaInicio: 'asc' },
             where: {
                 descricao: {
                 contains: descricao,
@@ -96,6 +98,7 @@ class BuscarAgendaDataService {
         fim.setDate(fim.getDate() + 1)
     const agenda = await prismaClient.agenda.findMany({
       include: incluirNomes,
+      orderBy: { horaInicio: 'asc' },
       where: {
         horaInicio: {
           gte: inicio,

@@ -18,10 +18,12 @@ function idadeNaData(nascimento: Date, data: Date){
     return idade
 }
 
-// Cada agendamento conta como uma procura pelo serviço
+// Só atendimentos concluídos entram nos indicadores: agendamentos futuros ou em andamento
+// ainda podem ser cancelados ou alterados
 class BuscarIndicadoresService{
     async execute(){
         const agendas = await prismaClient.agenda.findMany({
+            where: { status: 'concluido' },
             include: {
                 cliente: true,
                 funcionario: true,
