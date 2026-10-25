@@ -8,13 +8,13 @@ interface id{
 class CriarTipoAgendaService{
     async execute(TipoAgenda: TipoAgenda){
 
-        await prismaClient.tipoAgenda.create({
+        const tipoAgenda = await prismaClient.tipoAgenda.create({
             data:{
                 descricao: TipoAgenda.descricao
             }
         })
 
-        return TipoAgenda
+        return tipoAgenda
     }
 }
 
@@ -54,7 +54,7 @@ class BuscarTipoAgendaNomeService{
     async execute(TipoAgenda: TipoAgenda){
 
         if(TipoAgenda.descricao){
-            await prismaClient.tipoAgenda.findMany({
+            const tipoAgenda = await prismaClient.tipoAgenda.findMany({
                 where:{
                     descricao: {
                         contains: TipoAgenda.descricao,
@@ -63,7 +63,7 @@ class BuscarTipoAgendaNomeService{
                 }
             })
 
-            return TipoAgenda
+            return tipoAgenda
         }else{
             return("Não existe retorno para essa pesquisa")
         }        
@@ -84,7 +84,7 @@ class EditarTipoAgendaService{
                 }
             })
 
-            return TipoAgenda
+            return tipoAgenda
         }else{
             return("Não existe retorno para essa pesquisa")
         }        
@@ -94,7 +94,16 @@ class EditarTipoAgendaService{
 class DeletarTipoAgendaIdService{
     async execute({id}: id){
         try {
-            console.log(Number(id))
+            // funcionario.funcao não é chave estrangeira, então o banco não bloqueia sozinho
+            const emUso = await prismaClient.funcionario.count({
+                where:{
+                    funcao: Number(id)
+                }
+            })
+            if(emUso > 0){
+                return ("Especialidade em uso por profissionais, não pode ser excluída")
+            }
+
             const Agenda = await prismaClient.tipoAgenda.delete({
             where:{
                 id: Number(id)
