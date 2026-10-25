@@ -70,12 +70,16 @@ class BuscarAgendaNomeService{
 class BuscarAgendaDataService {
       async execute({ data }: data) {
     try {
-      const inicio = new Date(data)
+      // "AAAA-MM-DD" sem hora é lido como UTC; força horário local para não cair no dia anterior
+      const inicio = /^\d{4}-\d{2}-\d{2}$/.test(String(data)) ? new Date(`${data}T00:00:00`) : new Date(data)
         inicio.setHours(0, 0, 0, 0)
-    const agenda = await prismaClient.agenda.findMany({      
+      const fim = new Date(inicio)
+        fim.setDate(fim.getDate() + 1)
+    const agenda = await prismaClient.agenda.findMany({
       where: {
         horaInicio: {
-          gte: inicio
+          gte: inicio,
+          lt: fim
         }
       }
     })

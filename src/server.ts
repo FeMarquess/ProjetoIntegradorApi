@@ -12,15 +12,16 @@ const start = async () =>{
     })
 
     app.register(routes)
-    
+
+    app.get('/', async () => {
+      return { hello: 'world' }
+    })
+
     try{
         await app.listen({port: 3333})
-
-        app.get('/', async () => {
-          return { hello: 'world' }
-        })
     }catch(err){
-
+        app.log.error(err)
+        process.exit(1)
     }
 }
 
