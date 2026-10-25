@@ -10,7 +10,9 @@ class CriarClienteService{
         
         const cliente = await prismaClient.cliente.create({
             data:{
-                descricao: Cliente.descricao
+                descricao: Cliente.descricao,
+                telefone: Cliente.telefone,
+                dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
             }
         })
 
@@ -56,7 +58,10 @@ class BuscarClienteNomeService{
         if(Cliente.descricao){
             const cliente = await prismaClient.cliente.findMany({
                 where:{
-                    descricao: Cliente.descricao
+                    descricao: {
+                        contains: Cliente.descricao,
+                        mode: 'insensitive'
+                    }
                 }
             })
 
@@ -77,11 +82,13 @@ class EditarClienteService{
                     id: idAlterar
                 },
                 data:{
-                    descricao: Cliente.descricao
+                    descricao: Cliente.descricao,
+                    telefone: Cliente.telefone,
+                    dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
                 }
             })
 
-            return Cliente
+            return cliente
         }else{
             return("Não existe retorno para essa pesquisa")
         }        

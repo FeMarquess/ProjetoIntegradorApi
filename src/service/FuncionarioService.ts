@@ -82,11 +82,12 @@ class EditarFuncionarioService{
                     id: idAlterar
                 },
                 data:{
-                    descricao: Funcionario.descricao
+                    descricao: Funcionario.descricao,
+                    funcao: Funcionario.funcao
                 }
             })
 
-            return Funcionario
+            return funcionario
         }else{
             return("Não existe retorno para essa pesquisa")
         }        

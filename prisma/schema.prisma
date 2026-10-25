@@ -26,6 +26,7 @@ model agenda {
 model funcionario {
   id Int @id @default(autoincrement())
   descricao String
+  // id do tipoAgenda que a profissional atende (ex.: Manicure)
   funcao Int
   agenda agenda[] @relation("FuncionarioId")
 }
@@ -33,6 +34,8 @@ model funcionario {
 model cliente {
   id Int @id @default(autoincrement())
   descricao String
+  telefone String?
+  dataNascimento DateTime?
   agenda agenda[] @relation("ClienteId")
 }
 
