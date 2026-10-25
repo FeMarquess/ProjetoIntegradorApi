@@ -2,6 +2,8 @@ import type { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyRepl
 import { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, DeletarAgendaController, AlterarAgendaController } from "./controller/AgendaController.js";
 import { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioNomeController, BuscarFuncionarioEspecialidadeController, BuscarFuncionarioIdController, EditarFuncionarioController, DeletarFuncionarioController } from "./controller/FuncionarioController.js";
 import { CriarClienteController, BuscarClienteController, BuscarClienteIdController, BuscarClienteNomeController, EditarClienteController, DeletarClienteController } from "./controller/ClienteController.js";
+import { IniciarAgendaController, ConcluirAgendaController, BuscarAgendaFuncionarioController } from "./controller/TriagemController.js";
+import { BuscarIndicadoresController } from "./controller/IndicadoresController.js";
 import { BuscarTipoAgendaController, BuscarTipoAgendaIdController, BuscarTipoAgendaNomeController, CriarTipoAgendaController, EditarTipoAgendaController, DeletarTipoAgendaController } from "./controller/TipoAgendaController.js";
 
 export async function routes(fastify: FastifyInstance, options: FastifyPluginOptions){
@@ -112,4 +114,22 @@ export async function routes(fastify: FastifyInstance, options: FastifyPluginOpt
     fastify.delete("/deletarTipoAgenda",  async (req, res) =>{
         return new DeletarTipoAgendaController().handle(req, res)
     })
-} 
+
+// Triagem
+    fastify.get("/agendaBuscarFuncionario",  async (req, res) =>{
+        return new BuscarAgendaFuncionarioController().handle(req, res)
+    })
+
+    fastify.put("/agendaIniciar",  async (req, res) =>{
+        return new IniciarAgendaController().handle(req, res)
+    })
+
+    fastify.put("/agendaConcluir",  async (req, res) =>{
+        return new ConcluirAgendaController().handle(req, res)
+    })
+
+// Indicadores (BI)
+    fastify.get("/indicadores",  async (req, res) =>{
+        return new BuscarIndicadoresController().handle(req, res)
+    })
+}

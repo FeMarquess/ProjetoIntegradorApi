@@ -19,6 +19,8 @@ model agenda {
   tipoAgenda tipoAgenda @relation("TipoAgendaId", fields: [tipoAgendaId], references: [id])
   horaInicio DateTime 
   horaFim DateTime
+  // etapa da triagem: agendado | liberado | em_andamento | concluido
+  status String @default("agendado")
 
   @@map("agendas")
 }

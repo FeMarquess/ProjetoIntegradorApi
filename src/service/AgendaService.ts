@@ -1,5 +1,6 @@
 import prismaClient from "../prisma/index.js";
 import type { Agenda } from "../type/Agenda.js";
+import { recalcularVisita } from "./TriagemService.js";
 
 const dataInicio = new Date()
 const dataFim = new Date(dataInicio.setMinutes(dataInicio.getMinutes() + 30))
@@ -43,7 +44,8 @@ class CriarAgendaService{
                 horaFim: Agenda.horaFim
             }
         })
-        return Agenda
+        await recalcularVisita(res.clienteId, res.horaInicio)
+        return res
         }catch (error){
             return("Não foi possível criar a agenda")
         }
@@ -133,6 +135,7 @@ class DeletarAgendaIdService{
                 id: Number(id)
             }
         })
+        await recalcularVisita(Agenda.clienteId, Agenda.horaInicio)
 
         return Agenda
         } catch (error) {
@@ -148,6 +151,7 @@ class AlterarAgendaIdService{
         }
         if(id){
             const idAlterar = Number(id)
+            const anterior = await prismaClient.agenda.findUnique({ where: { id: idAlterar } })
             const agenda = await prismaClient.agenda.update({
                  where: {
                     id: idAlterar
@@ -161,6 +165,9 @@ class AlterarAgendaIdService{
                     horaFim: Agenda.horaFim
                 }                       
             })
+            // a agenda pode ter mudado de cliente ou de dia: recalcula a visita antiga e a nova
+            if(anterior) await recalcularVisita(anterior.clienteId, anterior.horaInicio)
+            await recalcularVisita(agenda.clienteId, agenda.horaInicio)
             
         return ("Sucesso ao alterar")
         }else {
