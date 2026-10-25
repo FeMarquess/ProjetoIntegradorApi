@@ -11,7 +11,7 @@ class CriarClienteService{
         const cliente = await prismaClient.cliente.create({
             data:{
                 descricao: Cliente.descricao,
-                telefone: Cliente.telefone,
+                telefone: Cliente.telefone ?? null,
                 dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
             }
         })
@@ -83,7 +83,7 @@ class EditarClienteService{
                 },
                 data:{
                     descricao: Cliente.descricao,
-                    telefone: Cliente.telefone,
+                    telefone: Cliente.telefone ?? null,
                     dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
                 }
             })

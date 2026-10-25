@@ -95,13 +95,14 @@ class DeletarTipoAgendaIdService{
     async execute({id}: id){
         try {
             // funcionario.funcao não é chave estrangeira, então o banco não bloqueia sozinho
-            const emUso = await prismaClient.funcionario.count({
+            const emUso = await prismaClient.funcionario.findMany({
                 where:{
                     funcao: Number(id)
                 }
             })
-            if(emUso > 0){
-                return ("Especialidade em uso por profissionais, não pode ser excluída")
+            if(emUso.length > 0){
+                const nomes = emUso.map((f) => `#${f.id} ${f.descricao}`).join(", ")
+                return (`Especialidade em uso por: ${nomes}. Troque a especialidade dessas profissionais antes de excluir`)
             }
 
             const Agenda = await prismaClient.tipoAgenda.delete({

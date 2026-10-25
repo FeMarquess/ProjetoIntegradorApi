@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
 import type { Funcionario } from "../type/Funcionario.js";
-import { CriarFuncionarioService, BuscarFuncionarioService, BuscarFuncionarioIdService, BuscarFuncionarioNomeService, EditarFuncionarioService, DeletarFuncionarioIdService } from "../service/FuncionarioService.js";
+import { CriarFuncionarioService, BuscarFuncionarioService, BuscarFuncionarioIdService, BuscarFuncionarioNomeService, BuscarFuncionarioEspecialidadeService, EditarFuncionarioService, DeletarFuncionarioIdService } from "../service/FuncionarioService.js";
 
 class CriarFuncionarioController{
     async handle(req: FastifyRequest , res: FastifyReply){
@@ -49,6 +49,17 @@ class BuscarFuncionarioNomeController{
     }
 }
 
+class BuscarFuncionarioEspecialidadeController{
+    async handle(req: FastifyRequest , res: FastifyReply){
+        const { descricao } = req.query as {descricao: string}
+        const buscarFuncionarioEspecialidadeService = new BuscarFuncionarioEspecialidadeService()
+
+        const funcionario = await buscarFuncionarioEspecialidadeService.execute({descricao});
+
+        res.send(funcionario);
+    }
+}
+
 class EditarFuncionarioController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const funcionarioEditar = req.body as Funcionario
@@ -73,4 +84,4 @@ class DeletarFuncionarioController{
     }
 }
 
-export { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioIdController, BuscarFuncionarioNomeController, EditarFuncionarioController, DeletarFuncionarioController }
+export { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioIdController, BuscarFuncionarioNomeController, BuscarFuncionarioEspecialidadeController, EditarFuncionarioController, DeletarFuncionarioController }

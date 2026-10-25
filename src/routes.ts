@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from "fastify";
 import { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, DeletarAgendaController, AlterarAgendaController } from "./controller/AgendaController.js";
-import { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioNomeController, BuscarFuncionarioIdController, EditarFuncionarioController, DeletarFuncionarioController } from "./controller/FuncionarioController.js";
+import { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioNomeController, BuscarFuncionarioEspecialidadeController, BuscarFuncionarioIdController, EditarFuncionarioController, DeletarFuncionarioController } from "./controller/FuncionarioController.js";
 import { CriarClienteController, BuscarClienteController, BuscarClienteIdController, BuscarClienteNomeController, EditarClienteController, DeletarClienteController } from "./controller/ClienteController.js";
 import { BuscarTipoAgendaController, BuscarTipoAgendaIdController, BuscarTipoAgendaNomeController, CriarTipoAgendaController, EditarTipoAgendaController, DeletarTipoAgendaController } from "./controller/TipoAgendaController.js";
 
@@ -45,6 +45,10 @@ export async function routes(fastify: FastifyInstance, options: FastifyPluginOpt
 
     fastify.get("/funcionarioBuscarNome",  async (req, res) =>{
         return new BuscarFuncionarioNomeController().handle(req, res)
+    })
+
+    fastify.get("/funcionarioBuscarEspecialidade",  async (req, res) =>{
+        return new BuscarFuncionarioEspecialidadeController().handle(req, res)
     })
 
     fastify.get("/funcionarioBuscarId",  async (req, res) =>{

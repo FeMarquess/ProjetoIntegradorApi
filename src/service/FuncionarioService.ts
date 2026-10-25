@@ -72,6 +72,31 @@ class BuscarFuncionarioNomeService{
     }
 }
 
+class BuscarFuncionarioEspecialidadeService{
+    async execute({descricao}: {descricao: string}){
+        // funcao guarda o id do tipoAgenda, então busca primeiro as especialidades pelo nome
+        const tipos = await prismaClient.tipoAgenda.findMany({
+            where:{
+                descricao: {
+                    contains: descricao || '',
+                    mode: 'insensitive'
+                }
+            }
+        })
+
+        const funcionarios = await prismaClient.funcionario.findMany({
+            where:{
+                funcao: { in: tipos.map((t) => t.id) }
+            }
+        })
+
+        return funcionarios.map((f) => ({
+            ...f,
+            especialidade: tipos.find((t) => t.id === f.funcao)?.descricao
+        }))
+    }
+}
+
 class EditarFuncionarioService{
     async execute(Funcionario: Funcionario, id: string){
 
@@ -111,4 +136,4 @@ class DeletarFuncionarioIdService{
     }
 }
 
-export { CriarFuncionarioService, BuscarFuncionarioService, BuscarFuncionarioIdService, BuscarFuncionarioNomeService, EditarFuncionarioService, DeletarFuncionarioIdService }
+export { CriarFuncionarioService, BuscarFuncionarioService, BuscarFuncionarioIdService, BuscarFuncionarioNomeService, BuscarFuncionarioEspecialidadeService, EditarFuncionarioService, DeletarFuncionarioIdService }
