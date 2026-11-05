@@ -1,27 +1,7 @@
 import prismaClient from "../prisma/index.js";
-
-const FAIXAS = [
-    { faixa: "Até 17", min: 0, max: 17 },
-    { faixa: "18 a 24", min: 18, max: 24 },
-    { faixa: "25 a 34", min: 25, max: 34 },
-    { faixa: "35 a 44", min: 35, max: 44 },
-    { faixa: "45 a 59", min: 45, max: 59 },
-    { faixa: "60 ou mais", min: 60, max: 200 }
-]
-
-// idade da cliente no dia do atendimento
-function idadeNaData(nascimento: Date, data: Date){
-    let idade = data.getFullYear() - nascimento.getUTCFullYear()
-    const fezAniversario = data.getMonth() > nascimento.getUTCMonth()
-        || (data.getMonth() === nascimento.getUTCMonth() && data.getDate() >= nascimento.getUTCDate())
-    if(!fezAniversario) idade--
-    return idade
-}
+import { FAIXAS, chaveDia, idadeNaData, indiceFaixa, mediaArredondada, minutosEntre } from "../regras/indicadores.js";
 
 const DIAS_PROXIMOS = 14
-
-const chaveDia = (data: Date) =>
-    `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`
 
 // Agendamentos ainda não concluídos por dia, de hoje até DIAS_PROXIMOS à frente.
 // Dias sem agendamento entram com 0 para a série ficar contínua.
@@ -70,6 +50,8 @@ class BuscarIndicadoresService{
             descricao: string,
             total: number,
             idades: number[],
+            duracoesPrevistas: number[],
+            duracoesReais: number[],
             profissionais: Map<number, { id: number, descricao: string, total: number }>
         }>()
         const faixas = FAIXAS.map((f) => ({ faixa: f.faixa, total: 0 }))
@@ -80,6 +62,8 @@ class BuscarIndicadoresService{
                 descricao: agenda.tipoAgenda.descricao,
                 total: 0,
                 idades: [] as number[],
+                duracoesPrevistas: [] as number[],
+                duracoesReais: [] as number[],
                 profissionais: new Map<number, { id: number, descricao: string, total: number }>()
             }
             servico.total++
@@ -95,8 +79,14 @@ class BuscarIndicadoresService{
             if(agenda.cliente?.dataNascimento){
                 const idade = idadeNaData(agenda.cliente.dataNascimento, agenda.horaInicio)
                 servico.idades.push(idade)
-                const faixa = FAIXAS.findIndex((f) => idade >= f.min && idade <= f.max)
+                const faixa = indiceFaixa(idade)
                 if(faixa >= 0) faixas[faixa]!.total++
+            }
+
+            // tempo combinado x tempo real (só quando a etapa foi iniciada e concluída pelo painel)
+            servico.duracoesPrevistas.push(minutosEntre(agenda.horaInicio, agenda.horaFimPrevista ?? agenda.horaFim))
+            if(agenda.inicioReal && agenda.fimReal){
+                servico.duracoesReais.push(minutosEntre(agenda.inicioReal, agenda.fimReal))
             }
 
             servicos.set(agenda.tipoAgendaId, servico)
@@ -107,9 +97,9 @@ class BuscarIndicadoresService{
                 id: s.id,
                 descricao: s.descricao,
                 total: s.total,
-                idadeMedia: s.idades.length
-                    ? Math.round(s.idades.reduce((soma, idade) => soma + idade, 0) / s.idades.length)
-                    : null,
+                idadeMedia: mediaArredondada(s.idades),
+                duracaoPrevistaMedia: mediaArredondada(s.duracoesPrevistas),
+                duracaoRealMedia: mediaArredondada(s.duracoesReais),
                 profissionais: [...s.profissionais.values()].sort((a, b) => b.total - a.total)
             }))
             .sort((a, b) => b.total - a.total)

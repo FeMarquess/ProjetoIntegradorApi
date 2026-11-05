@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-const ClienteSchema = z.object({
-  id: z.number().nullable(),
-  descricao: z.string(),
+export const ClienteSchema = z.object({
+  id: z.number().nullable().optional(),
+  descricao: z.string().trim().min(1, "informe o nome"),
   telefone: z.string().nullable().optional(),
   dataNascimento: z.coerce.date().nullable().optional(),
 });

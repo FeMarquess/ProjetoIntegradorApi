@@ -5,7 +5,6 @@ import { CriarTipoAgendaService, BuscarTipoAgendaService, BuscarTipoAgendaIdServ
 class CriarTipoAgendaController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const tipoAgendaCriar = req.body as TipoAgenda;
-        console.log(req.body)
         const criarTipoAgendaService = new CriarTipoAgendaService()
 
         const tipoAgenda = await criarTipoAgendaService.execute(tipoAgendaCriar);
@@ -27,7 +26,6 @@ class BuscarTipoAgendaController{
 class BuscarTipoAgendaIdController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const { id } = req.query as {id: string};
-        console.log(id)
 
         const buscarTipoAgendaIdService = new BuscarTipoAgendaIdService()
 
@@ -63,7 +61,6 @@ class EditarTipoAgendaController{
 
 class DeletarTipoAgendaController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        console.log(req.query)
         const id = req.query as {id: string}
         const deletarTipoAgendaService = new DeletarTipoAgendaIdService()
 

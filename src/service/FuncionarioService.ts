@@ -1,143 +1,131 @@
 import prismaClient from "../prisma/index.js";
-import type { Funcionario } from "../type/Funcionario.js";
+import { FuncionarioSchema } from "../type/Funcionario.js";
+import { codigoPrisma, conflito, lerId, naoEncontrado, requisicaoInvalida } from "../erros.js";
 
 interface id {
     id: string
 }
 
+// sempre devolve a profissional com a lista de especialidades que ela atende
+const incluirEspecialidades = {
+    especialidades: { orderBy: { descricao: 'asc' as const } }
+}
+
+async function validarEspecialidades(ids: number[]){
+    const existentes = await prismaClient.tipoAgenda.count({ where: { id: { in: ids } } })
+    if(existentes !== ids.length) throw requisicaoInvalida("Especialidade não encontrada")
+}
+
 class CriarFuncionarioService{
-    async execute(Funcionario: Funcionario){
+    async execute(corpo: unknown){
+        const funcionario = FuncionarioSchema.parse(corpo)
+        await validarEspecialidades(funcionario.especialidades)
 
-        const funcionario = await prismaClient.funcionario.create({
+        return prismaClient.funcionario.create({
             data:{
-                descricao: Funcionario.descricao,
-                funcao: Funcionario.funcao
-            }
+                descricao: funcionario.descricao,
+                especialidades: { connect: funcionario.especialidades.map((id) => ({ id })) }
+            },
+            include: incluirEspecialidades
         })
-
-        return funcionario
     }
 }
 
 class BuscarFuncionarioService{
     async execute(){
-        try{
-        const funcionario = await prismaClient.funcionario.findMany()
-
-        return funcionario
-    }catch(error){
-        return ("Não foi possível retornar agenda nessa busca")
+        return prismaClient.funcionario.findMany({
+            include: incluirEspecialidades,
+            orderBy: { descricao: 'asc' }
+        })
     }
-}
 }
 
 class BuscarFuncionarioIdService{
     async execute({id}: id){
-
-        console.log("service")
-        if(id)
-        {
-            console.log(id)
-            const funcionarioBusca = await prismaClient.funcionario.findFirst({
-                where:{
-                    id: Number(id)
-                }
-            })
-
-            return funcionarioBusca
-        } else{
-            return("Não existe retorno para essa pesquisa")
-        }
+        const funcionario = await prismaClient.funcionario.findUnique({
+            where:{
+                id: lerId(id)
+            },
+            include: incluirEspecialidades
+        })
+        if(!funcionario) throw naoEncontrado("Profissional não encontrada")
+        return funcionario
     }
 }
 
 class BuscarFuncionarioNomeService{
-    async execute(Funcionario: Funcionario){
-
-        if(Funcionario.descricao){
-            console.log(Funcionario.descricao)
-            const funcionario = await prismaClient.funcionario.findMany({
-                where:{
-                    descricao: {
-                        contains: Funcionario.descricao,
-                        mode: 'insensitive'
-                    }
+    async execute({descricao}: {descricao?: string}){
+        return prismaClient.funcionario.findMany({
+            where:{
+                descricao: {
+                    contains: descricao ?? '',
+                    mode: 'insensitive'
                 }
-            })
-
-            return funcionario
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+            },
+            include: incluirEspecialidades,
+            orderBy: { descricao: 'asc' }
+        })
     }
 }
 
+// Busca para o agendamento: uma linha por par (profissional, especialidade).
+// Se o termo for o nome de um serviço (ex.: "manicure"), traz só esse serviço de cada profissional;
+// se for o nome da profissional, traz todos os serviços que ela atende.
 class BuscarFuncionarioEspecialidadeService{
-    async execute({descricao}: {descricao: string}){
-        const termo = { contains: descricao || '', mode: 'insensitive' as const }
-        // funcao guarda o id do tipoAgenda, então busca primeiro as especialidades pelo nome
-        const tiposEncontrados = await prismaClient.tipoAgenda.findMany({
-            where:{ descricao: termo }
-        })
-
-        // acha a profissional pela atuação ou pelo próprio nome
+    async execute({descricao}: {descricao?: string}){
+        const termo = (descricao ?? '').trim().toLowerCase()
         const funcionarios = await prismaClient.funcionario.findMany({
-            where:{
-                OR: [
-                    { funcao: { in: tiposEncontrados.map((t) => t.id) } },
-                    { descricao: termo }
-                ]
-            },
+            include: incluirEspecialidades,
             orderBy: { descricao: 'asc' }
         })
 
-        const tipos = await prismaClient.tipoAgenda.findMany({
-            where:{ id: { in: funcionarios.map((f) => f.funcao) } }
+        return funcionarios.flatMap((f) => {
+            const nomeBate = f.descricao.toLowerCase().includes(termo)
+            return f.especialidades
+                .filter((e) => nomeBate || e.descricao.toLowerCase().includes(termo))
+                .map((e) => ({
+                    ...f,
+                    tipoAgendaId: e.id,
+                    especialidade: e.descricao
+                }))
         })
-
-        return funcionarios.map((f) => ({
-            ...f,
-            especialidade: tipos.find((t) => t.id === f.funcao)?.descricao
-        }))
     }
 }
 
 class EditarFuncionarioService{
-    async execute(Funcionario: Funcionario, id: string){
+    async execute(corpo: unknown, id: string){
+        const idAlterar = lerId(id)
+        const funcionario = FuncionarioSchema.parse(corpo)
+        await validarEspecialidades(funcionario.especialidades)
 
-        if(id){
-            const idAlterar = Number(id)
-            const funcionario = await prismaClient.funcionario.update({
-                where:{
-                    id: idAlterar
-                },
-                data:{
-                    descricao: Funcionario.descricao,
-                    funcao: Funcionario.funcao
-                }
-            })
-
-            return funcionario
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+        return prismaClient.funcionario.update({
+            where:{
+                id: idAlterar
+            },
+            data:{
+                descricao: funcionario.descricao,
+                // troca a lista inteira pela enviada
+                especialidades: { set: funcionario.especialidades.map((id) => ({ id })) }
+            },
+            include: incluirEspecialidades
+        })
     }
 }
 
 class DeletarFuncionarioIdService{
     async execute({id}: id){
         try {
-            console.log(Number(id))
-            const Funcionario = await prismaClient.funcionario.delete({
-            where:{
-                id: Number(id)
-            }
-        })
-
-        return Funcionario
+            return await prismaClient.funcionario.delete({
+                where:{
+                    id: lerId(id)
+                }
+            })
         } catch (error) {
-            return ("Não foi possível deletar esse funcionario")
-        }     
+            if(codigoPrisma(error) === 'P2003'){
+                throw conflito("A profissional tem agendamentos. Exclua ou transfira os agendamentos antes de excluir")
+            }
+            throw error
+        }
     }
 }
 

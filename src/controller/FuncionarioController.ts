@@ -1,10 +1,9 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import type { Funcionario } from "../type/Funcionario.js";
 import { CriarFuncionarioService, BuscarFuncionarioService, BuscarFuncionarioIdService, BuscarFuncionarioNomeService, BuscarFuncionarioEspecialidadeService, EditarFuncionarioService, DeletarFuncionarioIdService } from "../service/FuncionarioService.js";
 
 class CriarFuncionarioController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const funcionarioCriar = req.body as Funcionario;
+        const funcionarioCriar = req.body;
 
         const criarFuncionarioService = new CriarFuncionarioService()
 
@@ -27,7 +26,6 @@ class BuscarFuncionarioController{
 class BuscarFuncionarioIdController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const { id } = req.query as {id: string};
-        console.log(id)
 
         const buscarFuncionarioIdService = new BuscarFuncionarioIdService()
 
@@ -39,7 +37,7 @@ class BuscarFuncionarioIdController{
 
 class BuscarFuncionarioNomeController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const funcrionarioBuscarNome = req.query as Funcionario;
+        const funcrionarioBuscarNome = req.query as {descricao?: string};
 
         const buscarFuncionarioNomeService = new BuscarFuncionarioNomeService()
 
@@ -62,7 +60,7 @@ class BuscarFuncionarioEspecialidadeController{
 
 class EditarFuncionarioController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const funcionarioEditar = req.body as Funcionario
+        const funcionarioEditar = req.body
         const { id } = req.query as {id: string}
         const editarFuncionarioService = new EditarFuncionarioService()
 
@@ -74,7 +72,6 @@ class EditarFuncionarioController{
 
 class DeletarFuncionarioController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        console.log(req.query)
         const id = req.query as {id: string}
         const deletarFuncionarioService = new DeletarFuncionarioIdService()
 
