@@ -1,114 +1,79 @@
 import prismaClient from "../prisma/index.js";
-import type { Cliente } from "../type/Cliente.js";
+import { ClienteSchema } from "../type/Cliente.js";
+import { lerId, naoEncontrado } from "../erros.js";
 
 interface id {
     id: string
 }
 
-class CriarClienteService{
-    async execute(Cliente: Cliente){
-        
-        const cliente = await prismaClient.cliente.create({
-            data:{
-                descricao: Cliente.descricao,
-                telefone: Cliente.telefone ?? null,
-                dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
-            }
-        })
+function dadosCliente(corpo: unknown){
+    const cliente = ClienteSchema.parse(corpo)
+    return {
+        descricao: cliente.descricao,
+        telefone: cliente.telefone || null,
+        dataNascimento: cliente.dataNascimento ?? null
+    }
+}
 
-        return cliente
+class CriarClienteService{
+    async execute(corpo: unknown){
+        return prismaClient.cliente.create({
+            data: dadosCliente(corpo)
+        })
     }
 }
 
 class BuscarClienteService{
     async execute(){
-        try{
-        const cliente = await prismaClient.cliente.findMany()
-
-        return cliente
-    }catch(error){
-        return ("Não foi possível retornar agenda nessa busca")
+        return prismaClient.cliente.findMany({ orderBy: { descricao: 'asc' } })
     }
-}
 }
 
 class BuscarClienteIdService{
     async execute({id}: id){
-
-        console.log("service")
-        if(id)
-        {
-            console.log(id)
-            const clienteBusca = await prismaClient.cliente.findFirst({
-                where:{
-                    id: Number(id)
-                }
-            })
-
-            return clienteBusca
-        } else{
-            return("Não existe retorno para essa pesquisa")
-        }
+        const cliente = await prismaClient.cliente.findUnique({
+            where:{
+                id: lerId(id)
+            }
+        })
+        if(!cliente) throw naoEncontrado("Cliente não encontrada")
+        return cliente
     }
 }
 
 class BuscarClienteNomeService{
-    async execute(Cliente: Cliente){
-
-        if(Cliente.descricao){
-            const cliente = await prismaClient.cliente.findMany({
-                where:{
-                    descricao: {
-                        contains: Cliente.descricao,
-                        mode: 'insensitive'
-                    }
+    async execute({descricao}: {descricao?: string}){
+        return prismaClient.cliente.findMany({
+            where:{
+                descricao: {
+                    contains: descricao ?? '',
+                    mode: 'insensitive'
                 }
-            })
-
-            return cliente
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+            },
+            orderBy: { descricao: 'asc' }
+        })
     }
 }
 
 class EditarClienteService{
-    async execute(Cliente: Cliente, id: string){
-
-        if(id){
-            const idAlterar = Number(id)
-            const cliente = await prismaClient.cliente.update({
-                where:{
-                    id: idAlterar
-                },
-                data:{
-                    descricao: Cliente.descricao,
-                    telefone: Cliente.telefone ?? null,
-                    dataNascimento: Cliente.dataNascimento ? new Date(Cliente.dataNascimento) : null
-                }
-            })
-
-            return cliente
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+    async execute(corpo: unknown, id: string){
+        return prismaClient.cliente.update({
+            where:{
+                id: lerId(id)
+            },
+            data: dadosCliente(corpo)
+        })
     }
 }
 
 class DeletarClienteIdService{
     async execute({id}: id){
-        try {
-            console.log(Number(id))
-            const Cliente = await prismaClient.cliente.delete({
+        // as agendas da cliente ficam sem cliente (ON DELETE SET NULL), preservando os indicadores
+        return prismaClient.cliente.delete({
             where:{
-                id: Number(id)
+                id: lerId(id)
             }
         })
-
-        return Cliente
-        } catch (error) {
-            return ("Não foi possível deletar esse cliente")
-        }     
     }
 }
 

@@ -1,120 +1,97 @@
 import prismaClient from "../prisma/index.js";
 import type { TipoAgenda } from "../type/TipoAgenda.js";
+import { codigoPrisma, conflito, lerId, naoEncontrado, requisicaoInvalida } from "../erros.js";
 
 interface id{
     id: string
 }
 
+function lerDescricao(TipoAgenda: TipoAgenda){
+    const descricao = TipoAgenda?.descricao?.trim()
+    if(!descricao) throw requisicaoInvalida("Informe o nome da especialidade")
+    return descricao
+}
+
 class CriarTipoAgendaService{
     async execute(TipoAgenda: TipoAgenda){
-
-        const tipoAgenda = await prismaClient.tipoAgenda.create({
+        return prismaClient.tipoAgenda.create({
             data:{
-                descricao: TipoAgenda.descricao
+                descricao: lerDescricao(TipoAgenda)
             }
         })
-
-        return tipoAgenda
     }
 }
 
 class BuscarTipoAgendaService{
     async execute(){
-        try{
-        const tipoAgenda = await prismaClient.tipoAgenda.findMany()
-
-        return tipoAgenda
-    }catch(error){
-        return ("Não foi possível retornar agenda nessa busca")
+        return prismaClient.tipoAgenda.findMany({ orderBy: { descricao: 'asc' } })
     }
-}
 }
 
 class BuscarTipoAgendaIdService{
     async execute({id}: id){
-
-        console.log("service")
-        if(id)
-        {
-            console.log(id)
-            const tipoAgendaBusca = await prismaClient.tipoAgenda.findFirst({
-                where:{
-                    id: Number(id)
-                }
-            })
-
-            return tipoAgendaBusca
-        } else{
-            return("Não existe retorno para essa pesquisa")
-        }
+        const tipoAgenda = await prismaClient.tipoAgenda.findUnique({
+            where:{
+                id: lerId(id)
+            }
+        })
+        if(!tipoAgenda) throw naoEncontrado("Especialidade não encontrada")
+        return tipoAgenda
     }
 }
 
 class BuscarTipoAgendaNomeService{
     async execute(TipoAgenda: TipoAgenda){
-
-        if(TipoAgenda.descricao){
-            const tipoAgenda = await prismaClient.tipoAgenda.findMany({
-                where:{
-                    descricao: {
-                        contains: TipoAgenda.descricao,
-                        mode: 'insensitive'
-                    }
+        return prismaClient.tipoAgenda.findMany({
+            where:{
+                descricao: {
+                    contains: TipoAgenda?.descricao ?? '',
+                    mode: 'insensitive'
                 }
-            })
-
-            return tipoAgenda
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+            }
+        })
     }
 }
 
 class EditarTipoAgendaService{
     async execute(TipoAgenda: TipoAgenda, id: string){
-        console.log(id)
-        if(id){
-            const idAlterar = Number(id)
-            const tipoAgenda = await prismaClient.tipoAgenda.update({
-                where:{
-                    id: idAlterar
-                },
-                data:{
-                    descricao: TipoAgenda.descricao
-                }
-            })
-
-            return tipoAgenda
-        }else{
-            return("Não existe retorno para essa pesquisa")
-        }        
+        return prismaClient.tipoAgenda.update({
+            where:{
+                id: lerId(id)
+            },
+            data:{
+                descricao: lerDescricao(TipoAgenda)
+            }
+        })
     }
 }
 
 class DeletarTipoAgendaIdService{
     async execute({id}: id){
-        try {
-            // funcionario.funcao não é chave estrangeira, então o banco não bloqueia sozinho
-            const emUso = await prismaClient.funcionario.findMany({
-                where:{
-                    funcao: Number(id)
-                }
-            })
-            if(emUso.length > 0){
-                const nomes = emUso.map((f) => `#${f.id} ${f.descricao}`).join(", ")
-                return (`Especialidade em uso por: ${nomes}. Troque a especialidade dessas profissionais antes de excluir`)
-            }
-
-            const Agenda = await prismaClient.tipoAgenda.delete({
+        const idDeletar = lerId(id)
+        // a tabela de especialidades apagaria o vínculo em cascata; avisa antes para não sumir em silêncio
+        const emUso = await prismaClient.funcionario.findMany({
             where:{
-                id: Number(id)
+                especialidades: { some: { id: idDeletar } }
             }
         })
+        if(emUso.length > 0){
+            const nomes = emUso.map((f) => `#${f.id} ${f.descricao}`).join(", ")
+            throw conflito(`Especialidade em uso por: ${nomes}. Troque a especialidade dessas profissionais antes de excluir`)
+        }
 
-        return Agenda
+        try {
+            return await prismaClient.tipoAgenda.delete({
+                where:{
+                    id: idDeletar
+                }
+            })
         } catch (error) {
-            return ("Não foi possível deletar esse tipo de agenda")
-        }     
+            if(codigoPrisma(error) === 'P2003'){
+                throw conflito("Esta especialidade já foi usada em agendamentos e não pode ser excluída")
+            }
+            throw error
+        }
     }
 }
 

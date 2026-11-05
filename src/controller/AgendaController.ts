@@ -1,11 +1,9 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import { CriarAgendaService, BuscarAgendaService, BuscarAgendaNomeService, BuscarAgendaDataService, BuscarAgendaIdService, DeletarAgendaIdService, AlterarAgendaIdService } from "../service/AgendaService.js";
-import type { Agenda } from "../type/Agenda.js";
+import { CriarAgendaService, BuscarAgendaService, BuscarAgendaNomeService, BuscarAgendaDataService, BuscarAgendaClienteService, BuscarAgendaIdService, DeletarAgendaIdService, AlterarAgendaIdService } from "../service/AgendaService.js";
 
 class CriarAgendaController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const agendaCriar = req.body as Agenda;
-        console.log(agendaCriar)
+        const agendaCriar = req.body;
         const criarAgendaService = new CriarAgendaService()
 
         const agenda = await criarAgendaService.execute(agendaCriar);
@@ -57,6 +55,17 @@ class BuscarAgendaDataController{
     }
 }
 
+class BuscarAgendaClienteController{
+    async handle(req: FastifyRequest , res: FastifyReply){
+        const { clienteId } = req.query as {clienteId: string}
+        const buscarAgendaClienteService = new BuscarAgendaClienteService()
+
+        const agenda = await buscarAgendaClienteService.execute({clienteId});
+
+        res.send(agenda);
+    }
+}
+
 class DeletarAgendaController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const id = req.query as {id: string}
@@ -70,8 +79,8 @@ class DeletarAgendaController{
 
 class AlterarAgendaController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const Agenda = req.body as Agenda
-        const { id } = req.query as {id: Number}
+        const Agenda = req.body
+        const { id } = req.query as {id: string}
         const alterarAgendaService = new AlterarAgendaIdService()
 
         const agenda = await alterarAgendaService.execute(Agenda, id);
@@ -80,4 +89,4 @@ class AlterarAgendaController{
     }
 }
 
-export { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, DeletarAgendaController, AlterarAgendaController }
+export { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, BuscarAgendaClienteController, DeletarAgendaController, AlterarAgendaController }

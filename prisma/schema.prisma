@@ -21,6 +21,14 @@ model agenda {
   horaFim DateTime
   // etapa da triagem: agendado | liberado | em_andamento | concluido
   status String @default("agendado")
+  // horários reais, gravados ao iniciar e ao concluir a etapa
+  inicioReal DateTime?
+  fimReal DateTime?
+  // fim combinado originalmente; preenchido quando a etapa termina antes e libera o resto do horário
+  horaFimPrevista DateTime?
+
+  @@index([funcionarioId, horaInicio])
+  @@index([clienteId, horaInicio])
 
   @@map("agendas")
 }
@@ -28,8 +36,8 @@ model agenda {
 model funcionario {
   id Int @id @default(autoincrement())
   descricao String
-  // id do tipoAgenda que a profissional atende (ex.: Manicure)
-  funcao Int
+  // serviços que a profissional atende (ex.: Manicure e Cabelo)
+  especialidades tipoAgenda[] @relation("Especialidades")
   agenda agenda[] @relation("FuncionarioId")
 }
 
@@ -45,4 +53,5 @@ model tipoAgenda {
   id Int @id @default(autoincrement())
   descricao String
   agenda agenda[] @relation("TipoAgendaId")
+  profissionais funcionario[] @relation("Especialidades")
 }

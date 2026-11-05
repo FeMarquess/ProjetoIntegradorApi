@@ -4,7 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "prisma generate",
+    "typecheck": "tsc --noEmit --declaration false --declarationMap false -p .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run test/unit"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +18,8 @@
   "type": "module",
   "devDependencies": {
     "prisma": "^6.19.3",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^5.1.0"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",

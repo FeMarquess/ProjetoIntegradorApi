@@ -1,10 +1,9 @@
 import type { FastifyRequest, FastifyReply } from "fastify";
-import type { Cliente } from "../type/Cliente.js";
 import { CriarClienteService, BuscarClienteService, BuscarClienteIdService, BuscarClienteNomeService, EditarClienteService, DeletarClienteIdService } from "../service/ClienteService.js";
 
 class CriarClienteController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const clienteCriar = req.body as Cliente;
+        const clienteCriar = req.body;
 
         const criarClienteService = new CriarClienteService()
 
@@ -27,7 +26,6 @@ class BuscarClienteController{
 class BuscarClienteIdController{
     async handle(req: FastifyRequest , res: FastifyReply){
         const { id } = req.query as {id: string};
-        console.log(id)
 
         const buscarClienteIdService = new BuscarClienteIdService()
 
@@ -39,7 +37,7 @@ class BuscarClienteIdController{
 
 class BuscarClienteNomeController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const funcrionarioBuscarNome = req.query as Cliente;
+        const funcrionarioBuscarNome = req.query as {descricao?: string};
 
         const buscarClienteNomeService = new BuscarClienteNomeService()
 
@@ -51,7 +49,7 @@ class BuscarClienteNomeController{
 
 class EditarClienteController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        const clienteEditar = req.body as Cliente
+        const clienteEditar = req.body
         const { id } = req.query as {id: string}
 
         const editarClienteService = new EditarClienteService()
@@ -64,7 +62,6 @@ class EditarClienteController{
 
 class DeletarClienteController{
     async handle(req: FastifyRequest , res: FastifyReply){
-        console.log(req.query)
         const id = req.query as {id: string}
         const deletarClienteService = new DeletarClienteIdService()
 

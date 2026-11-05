@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from "fastify";
-import { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, DeletarAgendaController, AlterarAgendaController } from "./controller/AgendaController.js";
+import { CriarAgendaController, BuscarAgendaController, BuscarAgendaNomeController, BuscarAgendaIdController, BuscarAgendaDataController, BuscarAgendaClienteController, DeletarAgendaController, AlterarAgendaController } from "./controller/AgendaController.js";
 import { CriarFuncionarioController, BuscarFuncionarioController, BuscarFuncionarioNomeController, BuscarFuncionarioEspecialidadeController, BuscarFuncionarioIdController, EditarFuncionarioController, DeletarFuncionarioController } from "./controller/FuncionarioController.js";
 import { CriarClienteController, BuscarClienteController, BuscarClienteIdController, BuscarClienteNomeController, EditarClienteController, DeletarClienteController } from "./controller/ClienteController.js";
 import { IniciarAgendaController, ConcluirAgendaController, BuscarAgendaFuncionarioController } from "./controller/TriagemController.js";
@@ -10,6 +10,10 @@ export async function routes(fastify: FastifyInstance, options: FastifyPluginOpt
 // Agenda
     fastify.get("/agendaBuscarData",  async (req, res) =>{
         return new BuscarAgendaDataController().handle(req, res)
+    })
+
+    fastify.get("/agendaBuscarCliente",  async (req, res) =>{
+        return new BuscarAgendaClienteController().handle(req, res)
     })
 
     fastify.get("/agendaBuscarId",  async (req, res) =>{
